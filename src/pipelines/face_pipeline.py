@@ -29,7 +29,7 @@ def get_face_embeddings(image_np):
   detector, sp, facerec = load_dlib_models()
   faces = detector(image_np,1)
 
-  encoding = []
+  encodings = []
   for face in faces:
     shape=sp(image_np, face)
     face_descriptor = facerec.compute_face_descriptor(image_np, shape, 1)
@@ -51,7 +51,7 @@ def get_trained_model():
     embedding = student.get('face_embedding')
     if embedding:
       X.append(np.array(embedding))
-      y.append(student)
+      y.append(student["student_id"])
   
   if len(X) == 0 :
     return 0
@@ -63,7 +63,7 @@ def get_trained_model():
   except ValueError:
     pass
 
-  return {'clf':clf , 'X':x, 'y':y}
+  return {'clf':clf , 'X':X, 'y':y}
 
 def train_classifier():
   st.cache_resource.clear()
@@ -76,13 +76,13 @@ def predict_attendance(class_image_np):
   model_data = get_trained_model()
 
   if not model_data:
-    return detected_student, [],len(emcoding)
+    return detected_student, [],len(encodings)
   
   clf = model_data['clf']
   X = model_data['X']
   y = model_data['y']
 
-  get_all_students =sorted(list(set(y_train)))
+  all_students =sorted(list(set(y)))
 
   for encoding in encodings:
     if len(all_students)>=2:

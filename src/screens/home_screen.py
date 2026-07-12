@@ -3,7 +3,6 @@ from src.components.header import header_home
 from src.ui.base_layout import style_base_layout,style_backgroud_home, style_backgroud_dashboard
 from src.components.footer import footer_home
 def home_screen():
-  st.header("Home Screen")
 
   header_home()
   style_backgroud_home()

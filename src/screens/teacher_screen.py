@@ -11,23 +11,35 @@ def teacher_screen():
   style_backgroud_dashboard()
   style_base_layout()
 
-  # If already authenticated, skip straight to the dashboard
-  if st.session_state.get('teacher'):
-    teacher_dashboard()
-    return
 
-  if 'teacher_login_type' not in st.session_state or st.session_state.teacher_login_type == "login":
+  if "teacher_data" in st.session_state:
+    teacher_dashboard()
+  elif 'teacher_login_type' not in st.session_state or st.session_state.teacher_login_type == "login":
     teacher_screen_login()
   elif st.session_state.teacher_login_type == 'register':
     teacher_screen_register()
 
+
+def login_teacher(username, password):
+  if not username or not password:
+    return False
+
+  teacher = teacher_login(username, password)
+
+  if teacher:
+    st.session_state.user_role = 'teacher'
+    st.session_state.teacher_data = teacher
+    st.session_state.is_logged_in = True
+    return True
+
+  return False
 
 def teacher_screen_login():
   c1, c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
   with c1:
     header_dashboard()
   with c2:
-    if st.button("Go back to Home", type='secondary', key='login_back_btn', shortcut="control+backspace"):
+    if st.button("Go back to Home", type='secondary', key='loginbackbtn', shortcut="control+backspace"):
       st.session_state['login_type'] = None
       st.rerun()
 
@@ -42,12 +54,7 @@ def teacher_screen_login():
   btnc1, btnc2 = st.columns(2)
   with btnc1:
     if st.button('Login', icon=':material/passkey:', shortcut='control+enter', width='stretch', key='login_submit_btn'):
-      if not teacher_username or not teacher_pass:
-        st.error("Please enter both username and password")
-      else:
-        teacher = teacher_login(teacher_username, teacher_pass)
-        if teacher:
-          st.session_state['teacher'] = teacher
+        if login_teacher(teacher_username,teacher_pass):
           st.toast("Welcome back!", icon="🎉")
           time.sleep(1)
           st.rerun()
@@ -124,11 +131,11 @@ def teacher_dashboard():
     header_dashboard()
   with c2:
     if st.button("Logout", type='secondary', key='teacher_logout_btn'):
-      del st.session_state['teacher']
-      st.session_state['login_type'] = None
+      del st.session_state['teacher_data']
+      st.session_state['teacher_login_type'] = None
       st.rerun()
 
-  teacher = st.session_state['teacher']
+  teacher = st.session_state['teacher_data']
 
   st.markdown(f"""
     <div style="margin: 2rem 0;">

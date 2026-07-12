@@ -20,7 +20,7 @@ def style_backgroud_dashboard():
   st.markdown("""
     <style>
               .stApp{
-                background: #5865F2 !important;
+                background: #E0E3FF !important;
               }
               
     </style>
@@ -31,6 +31,7 @@ def style_base_layout():
   st.markdown("""
     <style>
               @import url('https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1979&display=swap');
+
               @import url('https://fonts.googleapis.com/css2?family=Climate+Crisis:YEAR@1979&family=Outfit:wght@100..900&display=swap');
 
             
@@ -44,22 +45,25 @@ def style_base_layout():
               }
 
               h1{
-              font-family: 'Climate Crisis', sans-serif;
+              font-family: 'Climate Crisis', sans-serif !important;
               font-size: 3.5rem !important;
               line-height: 0.9 !important;
               margin-bottom: 0rem !important;
               }
 
               h2{
-              font-family: 'Climate Crisis', sans-serif;
+              font-family: 'Climate Crisis', sans-serif !important;
               font-size: 2rem !important;
               line-height: !important;
               margin-bottom: 0rem !important;
+              color:black !important;
               }
               
               h3,h4,p{
-              font-family: 'Outfit', sans-serif;
+              font-family: 'Outfit', sans-serif !important;
               }
+
+              
 
               button{
               background: #5865F2 !important;
@@ -73,14 +77,14 @@ def style_base_layout():
               button[kind="secondary"]{
               background: #E8459E !important;
               border-radius: 1.5rem !important;
-              color: #fff !important;
+              color: white !important;
               padding: 10px 20px !important;
               border: none !important;
               transition: transform 0.25s ease-in-out !important;
               }
 
               button[kind="tertiary"]{
-              background: #black !important;
+              background: black !important;
               border-radius: 1.5rem !important;
               color: #fff !important;
               padding: 10px 20px !important;
