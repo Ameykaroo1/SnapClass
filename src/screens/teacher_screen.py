@@ -1,200 +1,348 @@
 import streamlit as st
 import time
+
 from src.ui.base_layout import style_backgroud_dashboard, style_base_layout
 from src.components.header import header_dashboard
 from src.components.footer import footer_dashboard
-from src.database.db import check_teacher_exists, create_teacher, teacher_login
+from src.database.db import (
+    check_teacher_exists,
+    create_teacher,
+    teacher_login,
+)
 
+
+# ===========================
+# MAIN SCREEN
+# ===========================
 
 def teacher_screen():
 
-  style_backgroud_dashboard()
-  style_base_layout()
+    style_backgroud_dashboard()
+    style_base_layout()
+
+    if "teacher_data" in st.session_state:
+        teacher_dashboard()
+
+    elif (
+        "teacher_login_type" not in st.session_state
+        or st.session_state.teacher_login_type == "login"
+    ):
+        teacher_screen_login()
+
+    else:
+        teacher_screen_register()
 
 
-  if "teacher_data" in st.session_state:
-    teacher_dashboard()
-  elif 'teacher_login_type' not in st.session_state or st.session_state.teacher_login_type == "login":
-    teacher_screen_login()
-  elif st.session_state.teacher_login_type == 'register':
-    teacher_screen_register()
-
+# ===========================
+# LOGIN
+# ===========================
 
 def login_teacher(username, password):
-  if not username or not password:
+
+    if not username or not password:
+        return False
+
+    teacher = teacher_login(username, password)
+
+    if teacher:
+
+        st.session_state.teacher_data = teacher
+        st.session_state.user_role = "teacher"
+        st.session_state.is_logged_in = True
+
+        return True
+
     return False
 
-  teacher = teacher_login(username, password)
-
-  if teacher:
-    st.session_state.user_role = 'teacher'
-    st.session_state.teacher_data = teacher
-    st.session_state.is_logged_in = True
-    return True
-
-  return False
 
 def teacher_screen_login():
-  c1, c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
-  with c1:
-    header_dashboard()
-  with c2:
-    if st.button("Go back to Home", type='secondary', key='loginbackbtn', shortcut="control+backspace"):
-      st.session_state['login_type'] = None
-      st.rerun()
 
-  st.header("Login using password",text_alignment='center')
-  st.write("")
-  st.write("")
-  teacher_username = st.text_input("Enter Username", placeholder='ananyaroy')
+    c1, c2 = st.columns(2)
 
-  teacher_pass = st.text_input("Enter password", type='password', placeholder="Enter Password")
-  st.divider()
+    with c1:
+        header_dashboard()
 
-  btnc1, btnc2 = st.columns(2)
-  with btnc1:
-    if st.button('Login', icon=':material/passkey:', shortcut='control+enter', width='stretch', key='login_submit_btn'):
-        if login_teacher(teacher_username,teacher_pass):
-          st.toast("Welcome back!", icon="🎉")
-          time.sleep(1)
-          st.rerun()
-        else:
-          st.error("Invalid username or password")
+    with c2:
+        if st.button(
+            "Go back to Home",
+            key="teacher_back_login",
+        ):
+            st.session_state["login_type"] = None
+            st.rerun()
 
-  with btnc2:
-    if st.button('Register Instead', type='primary', icon=':material/passkey:', width='stretch', key='goto_register_btn'):
-      st.session_state.teacher_login_type = 'register'
-      st.rerun()
+    st.header("Teacher Login")
 
-  footer_dashboard()
+    teacher_username = st.text_input(
+        "Username",
+        placeholder="ananyaroy",
+    )
+
+    teacher_password = st.text_input(
+        "Password",
+        type="password",
+    )
+
+    st.divider()
+
+    b1, b2 = st.columns(2)
+
+    with b1:
+
+        if st.button(
+            "Login",
+            use_container_width=True,
+        ):
+
+            if login_teacher(
+                teacher_username,
+                teacher_password,
+            ):
+                st.toast("Welcome back! 🎉")
+                time.sleep(1)
+                st.rerun()
+
+            else:
+                st.error("Invalid username or password")
+
+    with b2:
+
+        if st.button(
+            "Register Instead",
+            type="primary",
+            use_container_width=True,
+        ):
+            st.session_state.teacher_login_type = "register"
+            st.rerun()
+
+    footer_dashboard()
 
 
-def register_teacher(teacher_username, teacher_name, teacher_pass, teacher_pass_confirm):
-  if not teacher_username or not teacher_name or not teacher_pass:
-    return False, "All fields are required!"
-  if check_teacher_exists(teacher_username):
-    return False, "Username already taken"
-  if teacher_pass != teacher_pass_confirm:
-    return False, "Passwords don't match"
+# ===========================
+# REGISTER
+# ===========================
 
-  try:
-    create_teacher(teacher_username, teacher_pass, teacher_name)
-    return True, "Successfully created! Login now"
-  except Exception:
-    return False, "Unexpected error occurred. Please try again."
+def register_teacher(
+    username,
+    name,
+    password,
+    confirm_password,
+):
+
+    if not username or not name or not password:
+        return False, "All fields are required."
+
+    if password != confirm_password:
+        return False, "Passwords do not match."
+
+    if check_teacher_exists(username):
+        return False, "Username already exists."
+
+    try:
+
+        create_teacher(
+            username,
+            password,
+            name,
+        )
+
+        return True, "Registration successful."
+
+    except Exception as e:
+        return False, str(e)
 
 
 def teacher_screen_register():
-  c1, c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
-  with c1:
-    header_dashboard()
-  with c2:
-    if st.button("Go back to Home", type='secondary', key='register_back_btn', shortcut="control+backspace"):
-      st.session_state['login_type'] = None
-      st.rerun()
 
-  st.header("Register your teacher profile")
-  st.write("")
-  st.write("")
-  teacher_username = st.text_input("Enter Username", placeholder='ananyaroy')
+    c1, c2 = st.columns(2)
 
-  teacher_name = st.text_input("Enter name", placeholder='Ananya Roy')
+    with c1:
+        header_dashboard()
 
-  teacher_pass = st.text_input("Enter password", type='password', placeholder="Enter Password")
+    with c2:
 
-  teacher_pass_confirm = st.text_input("Confirm your password", type='password', placeholder="Enter Password", key='confirm_pass')
+        if st.button(
+            "Go back to Home",
+            key="teacher_back_register",
+        ):
+            st.session_state["login_type"] = None
+            st.rerun()
 
-  st.divider()
+    st.header("Teacher Registration")
 
-  btnc1, btnc2 = st.columns(2)
-  with btnc1:
-    if st.button('Register Now', icon=':material/passkey:', shortcut='control+enter', width='stretch', key='register_submit_btn'):
-      success, message = register_teacher(teacher_username, teacher_name, teacher_pass, teacher_pass_confirm)
-      if success:
-        st.success(message)
-        time.sleep(2)
-        st.session_state.teacher_login_type = 'login'
-        st.rerun()
-      else:
-        st.error(message)
-  with btnc2:
-    if st.button('Login Instead', type='primary', icon=':material/passkey:', width='stretch', key='goto_login_btn'):
-      st.session_state.teacher_login_type = 'login'
-      st.rerun()
+    username = st.text_input(
+        "Username",
+        placeholder="ananyaroy",
+    )
 
-  st.divider()
+    name = st.text_input(
+        "Name",
+        placeholder="Ananya Roy",
+    )
 
-  if st.session_state.current_teacher_tab =='take_attendance':
-    teacher_tab_take_attendance()
-  if st.session_state.current_teacher_tab =='manage_subjects':
-    teacher_tab_manage_subjects()
-  if st.session_state.current_teacher_tab =='attendance_records':
-    teacher_tab_attendance_records()
-    
+    password = st.text_input(
+        "Password",
+        type="password",
+    )
 
-  footer_dashboard()
+    confirm = st.text_input(
+        "Confirm Password",
+        type="password",
+    )
 
-def teacher_tab_take_attendance():
-  st.header('Take AI Attendance')
+    st.divider()
 
-def teacher_tab_manage_subjects():
-  st.header('Manage Subjects')
+    b1, b2 = st.columns(2)
 
-def teacher_tab_attendance_records():
-  st.header('Attendance Records')
+    with b1:
+
+        if st.button(
+            "Register",
+            use_container_width=True,
+        ):
+
+            success, message = register_teacher(
+                username,
+                name,
+                password,
+                confirm,
+            )
+
+            if success:
+
+                st.success(message)
+                time.sleep(1)
+
+                st.session_state.teacher_login_type = "login"
+                st.rerun()
+
+            else:
+                st.error(message)
+
+    with b2:
+
+        if st.button(
+            "Login Instead",
+            type="primary",
+            use_container_width=True,
+        ):
+
+            st.session_state.teacher_login_type = "login"
+            st.rerun()
+
+    footer_dashboard()
+
+
+# ===========================
+# DASHBOARD
+# ===========================
 
 def teacher_dashboard():
-  c1, c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
-  with c1:
-    header_dashboard()
-  with c2:
-    st.subheader(f"""Welcome, {teacher_data['name']}""")
-    if st.button("Logout", type='secondary', key='teacher_logout_btn'):
-      del st.session_state['teacher_data']
-      st.session_state['teacher_login_type'] = None
-      st.rerun()
 
-  st.write()
+    teacher = st.session_state["teacher_data"]
 
-  if'current_teacher_tab' not in st.session_state:
-    st.session_state.current_tab = 'take_attendance'
-  tab1,tab2, tab3 = st.columns(3)
+    if "current_teacher_tab" not in st.session_state:
+        st.session_state.current_teacher_tab = "take_attendance"
 
-  with tab1:
-    type1 ="primary" if st.session_state.current_teacher_tab == 'take_attendance' else "tertiary"
-    if st.button('Take Attendance',type=type1,width='stretch',icon = ':material/ar_on_you:'):
-      st.session_state.current_tab = 'take_attendance'
-      st.rerun()
+    c1, c2 = st.columns([3, 1])
 
-  with tab2:
-    type3 ="primary" if st.session_state.current_teacher_tab == 'manage_subjects' else "tertiary"
-    if st.button('Manage Subjects',type=type2,width='stretch',icon = ':material/book_ribbon:'):
-      st.session_state.current_tab = 'manage_subjects'
-      st.rerun()
+    with c1:
+        header_dashboard()
 
-  with tab3:
-    type3 ="primary" if st.session_state.current_teacher_tab == 'attendance_records' else "tertiary"
-    if st.button('Attendance Records',type==type3, width='stretch',icon = ':material/cards_stack:'):
-      st.session_state.current_tab = 'attendance_records'
-      st.rerun()
+    with c2:
+
+        st.write(f"### Welcome, {teacher['name']}")
+
+        if st.button("Logout"):
+
+            del st.session_state["teacher_data"]
+
+            st.session_state.teacher_login_type = "login"
+
+            st.rerun()
+
+    st.divider()
+
+    t1, t2, t3 = st.columns(3)
+
+    with t1:
+
+        if st.button(
+            "Take Attendance",
+            type=(
+                "primary"
+                if st.session_state.current_teacher_tab == "take_attendance"
+                else "secondary"
+            ),
+            use_container_width=True,
+        ):
+
+            st.session_state.current_teacher_tab = "take_attendance"
+            st.rerun()
+
+    with t2:
+
+        if st.button(
+            "Manage Subjects",
+            type=(
+                "primary"
+                if st.session_state.current_teacher_tab == "manage_subjects"
+                else "secondary"
+            ),
+            use_container_width=True,
+        ):
+
+            st.session_state.current_teacher_tab = "manage_subjects"
+            st.rerun()
+
+    with t3:
+
+        if st.button(
+            "Attendance Records",
+            type=(
+                "primary"
+                if st.session_state.current_teacher_tab == "attendance_records"
+                else "secondary"
+            ),
+            use_container_width=True,
+        ):
+
+            st.session_state.current_teacher_tab = "attendance_records"
+            st.rerun()
+
+    st.divider()
+
+    if st.session_state.current_teacher_tab == "take_attendance":
+        teacher_tab_take_attendance()
+
+    elif st.session_state.current_teacher_tab == "manage_subjects":
+        teacher_tab_manage_subjects()
+
+    elif st.session_state.current_teacher_tab == "attendance_records":
+        teacher_tab_attendance_records()
+
+    footer_dashboard()
 
 
-  footer_dashboard()
+# ===========================
+# TABS
+# ===========================
 
-  teacher = st.session_state['teacher_data']
+def teacher_tab_take_attendance():
 
-  st.markdown(f"""
-    <div style="margin: 2rem 0;">
-      <h1 style="color:#5865F2; font-size: 2.5rem; margin-bottom: 0.2rem;">
-        Welcome, {teacher.get('name', 'Teacher')}
-      </h1>
-      <p style="color:#666; font-size: 1.1rem;">
-        @{teacher.get('username', '')}
-      </p>
-    </div>
-  """, unsafe_allow_html=True)
+    st.header("📸 Take AI Attendance")
 
-  st.divider()
-  st.write("Your teacher dashboard content goes here.")
+    st.info("Attendance module coming soon.")
 
-  footer_dashboard()
+
+def teacher_tab_manage_subjects():
+
+    st.header("📚 Manage Subjects")
+
+    st.info("Subject management module coming soon.")
+
+
+def teacher_tab_attendance_records():
+
+    st.header("📋 Attendance Records")
+
+    st.info("Attendance records will appear here.")
