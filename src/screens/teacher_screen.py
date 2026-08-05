@@ -10,6 +10,7 @@ from src.database.db import (
     teacher_login,
     get_teacher_subjects,
 )
+from src.components.subject_card import subject_card
 from src.components.dialog_create_subject import create_subject_dialog
 
 
@@ -361,7 +362,7 @@ def teacher_tab_manage_subjects():
             stats = stats,
             footer_callback = share_btn
         )
-    else:
+    else: 
         st.warning("NO Subjects Found! Please create a new subject.",icon="⚠️")
 
 def teacher_tab_attendance_records():
