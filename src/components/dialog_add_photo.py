@@ -43,6 +43,7 @@ def add_photos_dialog():
             st.toast('Photo Uploaded Successfully')
             st.rerun()
 
+            
     if not uploaded_files:
         st.session_state.files_processed = False
 
