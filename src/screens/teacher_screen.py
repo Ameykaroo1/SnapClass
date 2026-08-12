@@ -21,6 +21,10 @@ from src.database.config import supabase
 from datetime import datetime
 import pandas as pd
 
+# NOTE: import your voice attendance dialog here once it exists, then
+# flip the disabled=True flag below to False, e.g.:
+# from src.components.dialog_voice_attendance import voice_attendance_dialog
+
 
 # ===========================
 # MAIN SCREEN
@@ -254,7 +258,7 @@ def teacher_dashboard():
     if "current_teacher_tab" not in st.session_state:
         st.session_state.current_teacher_tab = "take_attendance"
 
-    c1, c2 = st.columns([3, 1])
+    c1, c2 = st.columns([3, 1], vertical_alignment='bottom')
 
     with c1:
         header_dashboard()
@@ -371,26 +375,26 @@ def teacher_tab_take_attendance():
 
     st.divider()
 
-
     st.subheader("Added Photos")
     if st.session_state.attendance_images:
         cols = st.columns(4)
         for i, img in enumerate(st.session_state.attendance_images):
             with cols[i % 4]:
-                st.image(img,width='stretch',use_container_width=True,caption=f'photo {i+1}')
+                st.image(img, width='stretch', use_container_width=True, caption=f'photo {i+1}')
     else:
         st.caption("No photos added yet")
 
-    c1,c2,c3 =st.columns(3)
+    has_photos = bool(st.session_state.attendance_images)
+    c1, c2, c3 = st.columns(3)
+
     with c1:
-        if st.button("Clear all photos",width='stretch',type='tertiary',icon=':material/delete:'):
-            st.session_state.attendance_images=[]
+        if st.button("Clear all photos", width='stretch', type='tertiary', icon=':material/delete:', disabled=not has_photos):
+            st.session_state.attendance_images = []
             st.rerun()
 
     with c2:
-        has_photos = bool(st.session_state.attendance_images)
-        if st.button('Rum Face Analysis', width='stretch',type='secondary',icon=':material/analytics:'):
-            all_detected_id={}
+        if st.button('Run Face Analysis', width='stretch', type='secondary', icon=':material/analytics:', disabled=not has_photos):
+            all_detected_id = {}
             for i, img in enumerate(st.session_state.attendance_images):
                 img_np = np.array(img.convert('RGB'))
 
@@ -399,58 +403,56 @@ def teacher_tab_take_attendance():
                 if detected:
                     for sid in detected.keys():
                         student_id = int(sid)
+                        all_detected_id.setdefault(student_id, []).append(f"photo {i+1}")
 
-                        all_detected_id.setdefault(student_id,[]).append_id(f"photo {i+1}")
-
-            enrolled_res = supabase.table('subject_students').select("*,students(*)").eq('subject_id',selected_subject_id).execute()
-            enrolled_students=enrolled_res.data
+            enrolled_res = supabase.table('subject_students').select("*,students(*)").eq('subject_id', selected_subject_id).execute()
+            enrolled_students = enrolled_res.data
 
             if not enrolled_students:
                 st.warning('No students enrolled in this course')
             else:
-                results, attendance_to_log =[],[]
+                results, attendance_to_log = [], []
                 current_timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-
                 for node in enrolled_students:
-                    student =node['studnets']
-                    sources =all_detected_id.get(int(student['student_id']),[])
-                    is_present =len(sources)>0
+                    student = node['students']
+                    sources = all_detected_id.get(int(student['student_id']), [])
+                    is_present = len(sources) > 0
 
                     results.append({
                         "Name": student['name'],
-                        "ID":student['student_id'],
+                        "ID": student['student_id'],
                         "Source": ", ".join(sources) if is_present else "-",
-                        "Status":"Present"if is_present else "Absent"
+                        "Status": "Present" if is_present else "Absent"
                     })
-
 
                     attendance_to_log.append({
-                        'student_id':student['student_id'],
-                        'subject_id':selected_subject_id,
+                        'student_id': student['student_id'],
+                        'subject_id': selected_subject_id,
                         'timestamp': current_timestamp,
-                        'is_present':bool(is_present)
+                        'is_present': bool(is_present)
                     })
 
-            attendance_result_dialog(pd.DataFrame(results),attendance_to_log)
+                attendance_result_dialog(pd.DataFrame(results), attendance_to_log)
 
     with c3:
-        if st.button('use Voice Attendance',type='primary',width='stretch',icon=':material/mic:'):
-            voice_attendance_dialog()
-
-
+        # Voice attendance disabled until dialog_voice_attendance is created/imported.
+        # Once ready: remove disabled=True and uncomment the call below.
+        if st.button('Use Voice Attendance', type='primary', width='stretch', icon=':material/mic:', disabled=True):
+            pass
+            # voice_attendance_dialog(selected_subject_id)
 
 
 def teacher_tab_manage_subjects():
-    teacher_id  = st.session_state.teacher_data["teacher_id"]
+    teacher_id = st.session_state.teacher_data["teacher_id"]
     col1, col2 = st.columns(2)
     with col1:
-        st.header("📚 Manage Subjects",width='stretch')
+        st.header("📚 Manage Subjects", width='stretch')
     with col2:
-        if st.button("Create New Subject",width='content'):
+        if st.button("Create New Subject", width='content'):
             create_subject_dialog(teacher_id)
 
-    #List of subjects
+    # List of subjects
     subjects = get_teacher_subjects(teacher_id)
     if subjects:
         for sub in subjects:
@@ -466,12 +468,14 @@ def teacher_tab_manage_subjects():
             subject_card(
                 name=sub['name'],
                 code=sub['subject_code'],
-                section=sub['selection'],   
+                # NOTE: confirm your Supabase column name — likely 'section', not 'selection'
+                section=sub['selection'],
                 stats=stats,
                 footer_callback=share_btn
             )
-    else: 
-        st.warning("NO Subjects Found! Please create a new subject.",icon="⚠️")
+    else:
+        st.warning("NO Subjects Found! Please create a new subject.", icon="⚠️")
+
 
 def teacher_tab_attendance_records():
 
