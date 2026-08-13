@@ -19,6 +19,7 @@ from src.components.dialog_attendance_results import attendance_result_dialog
 import numpy as np
 from src.database.config import supabase
 from datetime import datetime
+from src.components.dialog_voice_attendance import voice_attendance_dialog
 import pandas as pd
 
 # NOTE: import your voice attendance dialog here once it exists, then
@@ -438,9 +439,9 @@ def teacher_tab_take_attendance():
     with c3:
         # Voice attendance disabled until dialog_voice_attendance is created/imported.
         # Once ready: remove disabled=True and uncomment the call below.
-        if st.button('Use Voice Attendance', type='primary', width='stretch', icon=':material/mic:', disabled=True):
+        if st.button('Use Voice Attendance', type='primary', width='stretch', icon=':material/mic:'):
             pass
-            # voice_attendance_dialog(selected_subject_id)
+            voice_attendance_dialog(selected_subject_id)
 
 
 def teacher_tab_manage_subjects():
